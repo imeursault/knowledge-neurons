@@ -310,8 +310,22 @@ def main():
             lambda_list_1.append(value_norm / ori_pred_emb_norm * args.norm_lambda1)
             lambda_list_2.append(value_norm / tgt_emb_norm * args.norm_lambda2)
         for i, (layer, pos) in enumerate(kn_bag):
-            model.bert.encoder.layer[layer].output.dense.weight[:, pos] -= ori_pred_emb * lambda_list_1[i]
-            model.bert.encoder.layer[layer].output.dense.weight[:, pos] += tgt_emb * lambda_list_2[i]
+            # Create a copy of the weight tensor to avoid modifying a view
+            weight_tensor = model.bert.encoder.layer[layer].output.dense.weight.clone().detach()
+
+            # Detach the tensors to break the autograd connection
+            detached_tensor1 = (ori_pred_emb * lambda_list_1[i]).detach()
+            detached_tensor2 = (tgt_emb * lambda_list_2[i]).detach()
+
+            # Perform the in-place operations on the copied tensor
+            weight_tensor[:, pos] -= detached_tensor1
+            weight_tensor[:, pos] += detached_tensor2
+
+            # Convert the modified tensor back into a Parameter
+            weight_param = torch.nn.Parameter(weight_tensor)
+
+            # Assign the modified Parameter back to the model
+            model.bert.encoder.layer[layer].output.dense.weight = weight_param
 
         _, logits = model(input_ids=input_ids, attention_mask=input_mask, token_type_ids=segment_ids, tgt_pos=tgt_pos, tgt_layer=0)  # (1, n_vocab)
         new_tgt_prob = F.softmax(logits, dim=-1)[0, tgt_label_id]  # scalar
@@ -328,8 +342,22 @@ def main():
 
         # recover knowledge
         for i, (layer, pos) in enumerate(kn_bag):
-            model.bert.encoder.layer[layer].output.dense.weight[:, pos] += ori_pred_emb * lambda_list_1[i]
-            model.bert.encoder.layer[layer].output.dense.weight[:, pos] -= tgt_emb * lambda_list_2[i]
+            # Create a copy of the weight tensor to avoid modifying a view
+            weight_tensor = model.bert.encoder.layer[layer].output.dense.weight.clone().detach()
+
+            # Detach the tensors to break the autograd connection
+            detached_tensor1 = (ori_pred_emb * lambda_list_1[i]).detach()
+            detached_tensor2 = (tgt_emb * lambda_list_2[i]).detach()
+
+            # Perform the operations on the copied tensor
+            weight_tensor[:, pos] += detached_tensor1
+            weight_tensor[:, pos] -= detached_tensor2
+
+            # Convert the modified tensor back into a Parameter
+            weight_param = torch.nn.Parameter(weight_tensor)
+
+            # Assign the modified Parameter back to the model
+            model.bert.encoder.layer[layer].output.dense.weight = weight_param
 
         if new_pred_label == tgt_ent:
             results['success_updated'] = 1
@@ -419,8 +447,22 @@ def main():
         tgt_emb = model.bert.embeddings.word_embeddings.weight[tgt_label_id]
         print(f'-- kn_num: {len(kn_bag)}')
         for i, (layer, pos) in enumerate(kn_bag):
-            model.bert.encoder.layer[layer].output.dense.weight[:, pos] -= ori_pred_emb * lambda_list_1[i]
-            model.bert.encoder.layer[layer].output.dense.weight[:, pos] += tgt_emb * lambda_list_2[i]
+            # Create a copy of the weight tensor to avoid modifying a view
+            weight_tensor = model.bert.encoder.layer[layer].output.dense.weight.clone().detach()
+
+            # Detach the tensors to break the autograd connection
+            detached_tensor1 = (ori_pred_emb * lambda_list_1[i]).detach()
+            detached_tensor2 = (tgt_emb * lambda_list_2[i]).detach()
+
+            # Perform the operations on the copied tensor
+            weight_tensor[:, pos] += detached_tensor1
+            weight_tensor[:, pos] -= detached_tensor2
+
+            # Convert the modified tensor back into a Parameter
+            weight_param = torch.nn.Parameter(weight_tensor)
+
+            # Assign the modified Parameter back to the model
+            model.bert.encoder.layer[layer].output.dense.weight = weight_param
 
         # inner relation
         inner_log_ppl_list = []
@@ -479,8 +521,22 @@ def main():
 
         # recover knowledge
         for i, (layer, pos) in enumerate(kn_bag):
-            model.bert.encoder.layer[layer].output.dense.weight[:, pos] += ori_pred_emb * lambda_list_1[i]
-            model.bert.encoder.layer[layer].output.dense.weight[:, pos] -= tgt_emb * lambda_list_2[i]
+            # Create a copy of the weight tensor to avoid modifying a view
+            weight_tensor = model.bert.encoder.layer[layer].output.dense.weight.clone().detach()
+
+            # Detach the tensors to break the autograd connection
+            detached_tensor1 = (ori_pred_emb * lambda_list_1[i]).detach()
+            detached_tensor2 = (tgt_emb * lambda_list_2[i]).detach()
+
+            # Perform the operations on the copied tensor
+            weight_tensor[:, pos] += detached_tensor1
+            weight_tensor[:, pos] -= detached_tensor2
+
+            # Convert the modified tensor back into a Parameter
+            weight_param = torch.nn.Parameter(weight_tensor)
+
+            # Assign the modified Parameter back to the model
+            model.bert.encoder.layer[layer].output.dense.weight = weight_param
 
         return results
 

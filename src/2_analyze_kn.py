@@ -1,12 +1,10 @@
 import json
-from matplotlib import pyplot as plt
-import numpy as np
 import os
-from collections import Counter
 import random
-import seaborn as sns
-import pandas as pd
-from pandas.core.frame import DataFrame
+from collections import Counter
+
+import numpy as np
+from matplotlib import pyplot as plt
 
 kn_dir = '../results/kn/'
 fig_dir = '../results/figs/'
@@ -76,9 +74,11 @@ y = y * 2
 plt.bar(x, y, width=1.02, color='#0165fc', bottom=bottom)
 plt.grid(True, axis='y', alpha=0.3)
 plt.tight_layout()
-
+if not os.path.exists(fig_dir):
+    os.mkdir(fig_dir)
 plt.savefig(os.path.join(fig_dir, 'kneurons_distribution.pdf'), dpi=100)
 plt.close()
+
 
 # ========================================================================================
 #                       knowledge neuron intersection analysis
@@ -97,6 +97,7 @@ def cal_intersec(kn_bag_1, kn_bag_2):
     kn_bag_1 = set(['@'.join(map(str, kn)) for kn in kn_bag_1])
     kn_bag_2 = set(['@'.join(map(str, kn)) for kn in kn_bag_2])
     return len(kn_bag_1.intersection(kn_bag_2))
+
 
 # ====== load ig kn =======
 
@@ -131,10 +132,14 @@ for rel, kn_bag_list in kn_bag_list_per_rel.items():
     for i in range(0, len_kn_bag_list):
         for j in range(0, 100):
             kn_bag_1 = kn_bag_list[i]
-            other_rel = random.choice([x for x in kn_bag_list_per_rel.keys() if x != rel])
-            other_idx = random.randint(0, len(kn_bag_list_per_rel[other_rel]) - 1)
-            kn_bag_2 = kn_bag_list_per_rel[other_rel][other_idx]
-            num_intersec = cal_intersec(kn_bag_1, kn_bag_2)
+            other_rels = [x for x in kn_bag_list_per_rel.keys() if x != rel]
+            if len(other_rels) == 0:
+                num_intersec = 0
+            else:
+                other_rel = random.choice(other_rels)
+                other_idx = random.randint(0, len(kn_bag_list_per_rel[other_rel]) - 1)
+                kn_bag_2 = kn_bag_list_per_rel[other_rel][other_idx]
+                num_intersec = cal_intersec(kn_bag_1, kn_bag_2)
             inter_ave_intersec.append(num_intersec)
 inter_ave_intersec = np.array(inter_ave_intersec).mean()
 print(f'ig kn has on average {inter_ave_intersec} inter kn interseciton')
@@ -171,10 +176,14 @@ for rel, kn_bag_list in kn_bag_list_per_rel.items():
     for i in range(0, len_kn_bag_list):
         for j in range(0, 100):
             kn_bag_1 = kn_bag_list[i]
-            other_rel = random.choice([x for x in kn_bag_list_per_rel.keys() if x != rel])
-            other_idx = random.randint(0, len(kn_bag_list_per_rel[other_rel]) - 1)
-            kn_bag_2 = kn_bag_list_per_rel[other_rel][other_idx]
-            num_intersec = cal_intersec(kn_bag_1, kn_bag_2)
+            other_rels = [x for x in kn_bag_list_per_rel.keys() if x != rel]
+            if len(other_rels) == 0:
+                num_intersec = 0
+            else:
+                other_rel = random.choice(other_rels)
+                other_idx = random.randint(0, len(kn_bag_list_per_rel[other_rel]) - 1)
+                kn_bag_2 = kn_bag_list_per_rel[other_rel][other_idx]
+                num_intersec = cal_intersec(kn_bag_1, kn_bag_2)
             inter_ave_intersec.append(num_intersec)
 inter_ave_intersec = np.array(inter_ave_intersec).mean()
 print(f'base kn has on average {inter_ave_intersec} inter kn interseciton')

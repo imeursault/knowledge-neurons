@@ -7,6 +7,7 @@ import argparse
 import math
 import os
 import torch
+import torch.nn as nn
 import random
 import numpy as np
 import json, jsonlines
@@ -297,8 +298,15 @@ def main():
         print(f'-- kn_num: {len(kn_rel)}')
         # unk_emb = model.bert.embeddings.word_embeddings.weight[100]
         for layer, pos in kn_rel:
-            # model.bert.encoder.layer[layer].output.dense.weight[:, pos] = unk_emb
-            model.bert.encoder.layer[layer].output.dense.weight[:, pos] = 0
+            # Create a copy of the weight tensor
+            weight = model.bert.encoder.layer[layer].output.dense.weight.clone()
+            # Zero out the positions you want to erase
+            weight[:, pos] = 0
+            # Convert the modified tensor to a nn.Parameter
+            weight = nn.Parameter(weight)
+            # Assign the entire modified tensor back to the model
+            model.bert.encoder.layer[layer].output.dense.weight = weight
+
         # ============================================== erase knowledge end =============================================================
 
         # ========================== eval self =====================
